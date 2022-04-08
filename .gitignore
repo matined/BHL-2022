@@ -1,1 +1,2 @@
-data/*
+data/*.csv
+pipelines/__pycache__*
