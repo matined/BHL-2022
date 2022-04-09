@@ -1,14 +1,15 @@
+from coordinates_cluster import CoordinatesConverter
+from adress_to_coordinates import CoordinatesFromAddress
+from sklearn.pipeline import make_pipeline
+from category_encoder import CategoryEncoder
+from category_merger import CategoryMerger
+from category_imputer import CategoryImputer
 import pandas as pd
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PowerTransformer
-from delete_columns import DeleteColumns
 import numpy as np
-from category_imputer import CategoryImputer
-from category_merger import CategoryMerger
-from category_encoder import CategoryEncoder
-from sklearn.pipeline import make_pipeline
-from adress_to_coordinates import CoordinatesFromAddress
+import pickle as pkl
 
 
 def preprocess_raw_dataframe(df, fit=False, num_pipe=None, cat_pipeline=None):
@@ -17,7 +18,8 @@ def preprocess_raw_dataframe(df, fit=False, num_pipe=None, cat_pipeline=None):
             [
                 (
                     "imputer",
-                    SimpleImputer(missing_values=np.nan, strategy="constant", fill_value=0),
+                    SimpleImputer(missing_values=np.nan,
+                                  strategy="constant", fill_value=0),
                 ),
                 (
                     "power_scaler",
@@ -72,7 +74,8 @@ def preprocess_raw_dataframe(df, fit=False, num_pipe=None, cat_pipeline=None):
     df["LTAREA"] = df["LTFRONT"] * df["LTDEPTH"]
     if fit:
         print("Numeric feature processing...")
-        df[numeric_features] = num_pipe.fit_transform(df[numeric_features].values)
+        df[numeric_features] = num_pipe.fit_transform(
+            df[numeric_features].values)
         print("Cat feature processing...")
         df = cat_pipeline.fit_transform(df)
         print("Getting coords...")
@@ -92,13 +95,41 @@ def preprocess_raw_dataframe(df, fit=False, num_pipe=None, cat_pipeline=None):
 
 if __name__ == '__main__':
     df_train = pd.read_csv("data/train.csv", sep=",", on_bad_lines='skip')
-    df_train, num_pipe, cat_pipe = preprocess_raw_dataframe(df_train, fit=True)
-    df_train.to_csv("data/train_processed.csv", index=False)
-
     df_val = pd.read_csv("data/val.csv", sep=",", on_bad_lines='skip')
-    df_val, _, _ = preprocess_raw_dataframe(df_val, num_pipe=num_pipe, cat_pipeline=cat_pipe)
-    df_val.to_csv('data/val_processed.csv', index=False)
-
     df_test = pd.read_csv("data/test.csv", sep=",", on_bad_lines='skip')
-    df_test, _, _ = preprocess_raw_dataframe(df_test, num_pipe=num_pipe, cat_pipeline=cat_pipe)
+
+    df_train, num_pipe, cat_pipe = preprocess_raw_dataframe(df_train, fit=True)
+    with open('pipelines/pickles/num_pipe.pkl', 'wb') as f:
+        pkl.dump(num_pipe, f)
+    with open('pipelines/pickles/one_hot.pkl', 'wb') as f:
+        pkl.dump(cat_pipe[2].one_hot_transformer, f)
+
+    df_val, _, _ = preprocess_raw_dataframe(
+        df_val, num_pipe=num_pipe, cat_pipeline=cat_pipe)
+
+    df_test, _, _ = preprocess_raw_dataframe(
+        df_test, num_pipe=num_pipe, cat_pipeline=cat_pipe)
+
+    converter = CoordinatesConverter()
+    df_train = df_train.assign(
+        loc_cluster=converter.convert(df_train)
+    ).drop(columns=['Longitude', 'Latitude'])
+
+    df_val = df_val.assign(
+        loc_cluster=converter.convert(df_val)
+    ).drop(columns=['Longitude', 'Latitude'])
+
+    df_test = df_test.assign(
+        loc_cluster=converter.convert(df_test)
+    ).drop(columns=['Longitude', 'Latitude'])
+
+    with open('pipelines/pickles/relevant_cols.pkl', 'rb') as f:
+        relevant_cols = pkl.load(f)
+
+    df_train = df_train[relevant_cols]
+    df_val = df_val[relevant_cols]
+    df_test = df_test[relevant_cols]
+
+    df_train.to_csv("data/train_processed.csv", index=False)
+    df_val.to_csv('data/val_processed.csv', index=False)
     df_test.to_csv('data/test_processed.csv', index=False)

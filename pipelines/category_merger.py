@@ -3,7 +3,7 @@ from sklearn.base import TransformerMixin
 
 class CategoryMerger(TransformerMixin):
 
-    def fit(self, X, y=None, **kwargs):
+    def __init__(self):
         self.cat_mapping = {
             'A': 'Family',
             'C': 'Family',
@@ -31,6 +31,8 @@ class CategoryMerger(TransformerMixin):
             'Y': 'Public use',
             'Z': 'Public use'
         }
+
+    def fit(self, X, y=None, **kwargs):
         return self
 
     def transform(self, X, y=None, **kwargs):

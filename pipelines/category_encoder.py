@@ -6,9 +6,13 @@ from sklearn.preprocessing import OneHotEncoder
 
 class CategoryEncoder(TransformerMixin):
 
+    def __init__(self):
+        self.one_hot_cols = ['BLDGCL', 'EXT',
+                             'EASEMENT', 'EXCD2', 'EXCD1', "TAXCLASS"]
+
     def fit(self, X, y=None, **kwargs):
-        self.one_hot_cols = ['BLDGCL', 'EXT', 'EASEMENT', 'EXCD2', 'EXCD1', "TAXCLASS"]
-        self.one_hot_transformer = OneHotEncoder(sparse=False, handle_unknown='ignore')
+        self.one_hot_transformer = OneHotEncoder(
+            sparse=False, handle_unknown='ignore')
         self.one_hot_transformer.fit(X[self.one_hot_cols].astype('str'))
         return self
 

@@ -32,28 +32,31 @@ val_y_log = np.log(val_y + 1)
 df_train[cat_names] = df_train[cat_names].astype('category')
 df_val[cat_names] = df_val[cat_names].astype('category')
 
-dtrain = xgb.DMatrix(df_train.values, enable_categorical=True, label=train_y, feature_names=df_train.columns)
-dval = xgb.DMatrix(df_val.values, enable_categorical=True, label=val_y, feature_names=df_val.columns)
+dtrain = xgb.DMatrix(df_train.values, enable_categorical=True,
+                     label=train_y, feature_names=df_train.columns)
+dval = xgb.DMatrix(df_val.values, enable_categorical=True,
+                   label=val_y, feature_names=df_val.columns)
 
 
 def objective(trial: optuna.Trial):
 
     param = {'objective': 'reg:squarederror',
              'eval_metric': 'mae',
-             "max_depth": trial.suggest_int('max_depth',1,12),
+             "max_depth": trial.suggest_int('max_depth', 1, 12),
              "eta": trial.suggest_float('eta', 0.001, 0.99),
-             "gamma":trial.suggest_float('gamma',0,50000),
-             "subsample": trial.suggest_float('subsample',0,1),
-             "lambda":trial.suggest_float('lambda',1, 20),
-             "alpha":trial.suggest_float('alpha',0, 20),
-             "colsample_bytree":trial.suggest_float("colsample_bytree",0,1),
-             "colsample_bylevel":trial.suggest_float("colsample_bylevel",0,1),
-              "colsample_bynode":trial.suggest_float("colsample_bynode", 0,1),
-             "verbosity":0}
+             "gamma": trial.suggest_float('gamma', 0, 50000),
+             "subsample": trial.suggest_float('subsample', 0, 1),
+             "lambda": trial.suggest_float('lambda', 1, 20),
+             "alpha": trial.suggest_float('alpha', 0, 20),
+             "colsample_bytree": trial.suggest_float("colsample_bytree", 0, 1),
+             "colsample_bylevel": trial.suggest_float("colsample_bylevel", 0, 1),
+             "colsample_bynode": trial.suggest_float("colsample_bynode", 0, 1),
+             "verbosity": 0}
 
-    n_trees = trial.suggest_int('ntrees',10, 3000)
+    n_trees = trial.suggest_int('ntrees', 10, 3000)
     results = {}
-    reg = xgb.train(param, dtrain, n_trees, evals=[(dval, 'val')], evals_result=results, early_stopping_rounds=10)
+    reg = xgb.train(param, dtrain, n_trees, evals=[
+                    (dval, 'val')], evals_result=results, early_stopping_rounds=10)
     loss = min(results['val']['mae'])
     trial.set_user_attr('best_ntree', reg.best_ntree_limit)
     return loss
