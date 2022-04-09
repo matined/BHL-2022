@@ -2,35 +2,35 @@
 
 ## 1. Feature Engineering - pipeline
 
-### address_to_coordinates.CoordinatesFromAddress()
-Brakujące współrzędne geograficzne uzupełniamy korzystając z adresu i mapbox API.
+Feature Engineering został rozwiązany za pomocą pipelinów z sklearna. W związku z tym każda z poniższych klas posiada metodę `fit()` i `transform()`. W niektórych pipelinach wywołanie `fit()` nic nie robi.
 
-### category_encoder.CategoryEncoder()
-Zamienia kategoryczne kolumny na kodowanie one-hot.
+### `address_to_coordinates.CoordinatesFromAddress`
+    Klasa imputuje współrzędne korzystając z adresu korzystając z mapbox API.
 
-### category_imputer.CategoryImputer()
-Brakujące kategorie uzupełnia "No".
+### `category_imputer.CategoryImputer`
+    Imputacja wartości 'No' w miejsce nulli, ponieważ te braki nie są wywołane błędami.
 
-### category_merger.CategoryMerger()
-Łączy kategorie w niktórych kolumnach kategorycznych.
+### `category_encoder.CategoryEncoder`
+    One hot encoding kolumn kategorycznych.
 
-### coordinates_cluster.CoordinatesConverter()
-Dzieli współrzędne na klastry.
+### `category_merger.CategoryMerger`
+    Łączy kategorie w niktórych kolumnach kategorycznych.
 
-### delete_columns.DeleteColumns()
-Usuwa niktóre kolumny.
+### `coordinates_cluster.CoordinatesConverter`
+    Przy użyciu metody k średnich kategoryzuje zmienne odpowiadające współrzędnym geograficznym nieruchomości.
 
-### numeric_transformers.NumericTransformer()
-Standaryzuje numeryczne kolumny.
+### `delete_columns.DeleteColumns`
+    Usuwa niepotrzebne kolumny.
 
-### numeric_transformers.AreaExtractor()
-Dodaje dodatkowe kolumny.
+### `numeric_transformers.NumericTransformer`
+    Standaryzuje numeryczne kolumny w taki sposób, że mają średnią 0 i odchylenie standardowe 1
 
-### preprocess
-Skrypt preprocesujący całe dane.
+### `numeric_transformers.AreaExtractor`
+    Dodaje dodatkowe kolumny oznaczające pola posiadłości i działki, na której jest ta nieruchomość.
+
+### `preprocess`
+    Skrypt preprocesujący całe dane wykorzystując wszystkie powyższe pipeliny.
 
 ## 2. Model
-Aby użyć model należy:
-+ utworzyć obiekt klay `pipelines.interface.Predictor` 
-+ wywołać na nim metode `predict()`.
+Modelem jest xgboost. Aby użyć model należy skorzystać z klasy `interface.Predictor` i wywołać metodę predict. Wszystkie pipeliny są wczytywane z plików `.pkl`.
 

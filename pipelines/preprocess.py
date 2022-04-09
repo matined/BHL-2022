@@ -111,6 +111,7 @@ if __name__ == '__main__':
         df_test, num_pipe=num_pipe, cat_pipeline=cat_pipe)
 
     converter = CoordinatesConverter()
+
     df_train = df_train.assign(
         loc_cluster=converter.convert(df_train)
     ).drop(columns=['Longitude', 'Latitude'])
@@ -124,7 +125,8 @@ if __name__ == '__main__':
     ).drop(columns=['Longitude', 'Latitude'])
 
     with open('pipelines/pickles/relevant_cols.pkl', 'rb') as f:
-        relevant_cols = pkl.load(f)
+        relevant_cols = pkl.load(f).tolist()
+    relevant_cols.append('FULLVAL')
 
     df_train = df_train[relevant_cols]
     df_val = df_val[relevant_cols]
